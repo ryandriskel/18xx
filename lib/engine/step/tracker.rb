@@ -221,21 +221,17 @@ module Engine
       def legal_tile_rotation?(entity, hex, tile)
         return false unless @game.legal_tile_rotation?(entity, hex, tile)
 
-        old_paths = hex.tile.paths
-        old_ctedges = hex.tile.city_town_edges
-
-        new_paths = tile.paths
-        new_exits = tile.exits
-        new_ctedges = tile.city_town_edges
-        extra_cities = [0, new_ctedges.size - old_ctedges.size].max
-
-        new_exits.all? { |edge| hex.neighbors[edge] } &&
-          (new_exits & available_hex(entity, hex)).any? &&
-          old_paths.all? { |path| new_paths.any? { |p| path <= p } } &&
+        hex.exits_touch_legal_hexes(tile) &&
+          hex_can_be_reached(entity, hex, tile.exits) &&
+          hex.paths_maintained(tile) &&
           # Count how many cities on the new tile that aren't included by any of the old tile.
           # Make sure this isn't more than the number of new cities added.
           # 1836jr30 D6 -> 54 adds more cities
-          extra_cities >= new_ctedges.count { |newct| old_ctedges.all? { |oldct| (newct & oldct).none? } }
+          hex.cities_arent_split(tile)
+      end
+
+      def hex_can_be_reached(entity, hex, new_exits)
+        (new_exits & available_hex(entity, hex)).any?
       end
 
       def legal_tile_rotations(entity, hex, tile)

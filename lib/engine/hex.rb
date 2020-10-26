@@ -216,6 +216,23 @@ module Engine
       DIRECTIONS[@layout][[other.x - @x, other.y - @y]]
     end
 
+    def exits_touch_legal_hexes(new_tile)
+      new_tile.exits.all? { |edge| neighbors[edge] }
+    end
+
+    def paths_maintained(new_tile)
+      old_paths = tile.paths
+      new_paths = new_tile.paths
+      old_paths.all? { |path| new_paths.any? { |p| path <= p } }
+    end
+
+    def cities_arent_split(new_tile)
+      new_ctedges = new_tile.city_town_edges
+      old_ctedges = hex.tile.city_town_edges
+      extra_cities = [0, new_ctedges.size - old_ctedges.size].max
+      extra_cities >= new_ctedges.count { |newct| old_ctedges.all? { |oldct| (newct & oldct).none? } }
+    end
+
     def targeting?(other)
       dir = neighbor_direction(other)
       @tile.exits.include?(dir)
